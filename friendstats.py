@@ -5,8 +5,13 @@
 # atexit.register(logout)
 import argparse
 
+import logging
+
 from FileRepository import read_json
 from SessionController import SessionController
+from Logger import create_logger
+
+logger = create_logger("stats")
 
 
 class Application:
@@ -33,7 +38,7 @@ class Application:
                 self.following = cache['following']
                 return True
             except:
-                print("Failed to read cache")
+                logger.warning("Failed to read cache")
 
         return False
 
@@ -50,7 +55,8 @@ if __name__ == "__main__":
     parser.add_argument("-p", "--password", help='Instagram password')
     parser.add_argument("-c", "--config", help='Application config file')
     parser.add_argument("-r", "--rebuild", action="store_true", help='Rebuild the user cache from the web')
-    parser.add_argument("-v", "--verified", action="store_true", help='Filter by hiding verified users')
+    parser.add_argument("-x", "--verified", action="store_true", help='Filter by hiding verified users')
+    parser.add_argument("-v", "--verbose", action="store_true", help='Verbose logging')
 
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("-f", "--followers", action="store_true", help="Show your followers")
@@ -59,16 +65,20 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    if args.verbose:
+        logger.setLevel(logging.DEBUG)
+
     app = None
     username = args.username
     password = args.password
     if not username and not password and args.config:
+        logger.debug("Reading username and password from config file")
         config = read_json(args.config)
         username = config['username']
         password = config['password']
 
     if not username and not password:
-        print("No credentials found")
+        logger.warn("No credentials found")
         exit()
 
     app = Application(username, password, args.rebuild)

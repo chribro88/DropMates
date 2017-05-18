@@ -3,8 +3,11 @@ import random
 
 import requests
 import time
+import logging
 
 from User import User
+
+logger = logging.getLogger('stats')
 
 
 class SessionController:
@@ -26,6 +29,9 @@ class SessionController:
         self.password = None
 
     def __get_page(self, data):
+        logger.info("Getting page with data")
+        logger.debug("Page data: %s" % data)
+
         post = {
             'q': 'ig_user(%i) { \
                    %s { ' % (self.user_id, data) +
@@ -52,10 +58,11 @@ class SessionController:
         response = self.session.post(SessionController.url_query, data=post)
         data = json.loads(response.text)
 
+        logger.info("Finish getting users from page")
         return data
 
     def __get_users(self, relationship):
-        print("Building relationship list: %s" % relationship)
+        logger.info("Building relationship list: %s" % relationship)
 
         data = self.__get_page("%s.first(20)" % relationship)
         users = []
@@ -73,9 +80,8 @@ class SessionController:
             for node in data[relationship]['nodes']:
                 users.append(User.from_node(node))
 
-        print("Found %i followers" % len(users))
-
-        print("Finished building list: %s" % relationship)
+        logger.info("Found %i followers" % len(users))
+        logger.info("Finished building list: %s" % relationship)
 
         return users
 
@@ -86,10 +92,10 @@ class SessionController:
         return self.__get_users("follows")
 
     def unfollow(self, user):
-        print("Unfollowing %s" % user.full_name)
+        logger.info("Unfollowing %s" % user.full_name)
 
         if not self.logged_in:
-            print("Not logged in, exiting")
+            logger.warning("Not logged in, exiting")
             exit()
 
         response = self.session.post(SessionController.url_unfollow % user.id)
@@ -99,12 +105,12 @@ class SessionController:
             if status['status'] != 'ok':
                 raise Exception("Failed to unfollow")
         except:
-            print("Possibly unfolowing too fast")
-            print("Error: %s" % response.text)
-            print("Exiting to prevent ban")
+            logger.warning("Possibly unfolowing too fast: %s" % status)
+            logger.warning("Exiting to prevent ban")
             quit()
 
     def unfollow_all(self, user_list):
+        logger.info("Unfollowing %i users" % len(user_list))
         for user in user_list:
             self.unfollow(user)
 
@@ -112,11 +118,13 @@ class SessionController:
                                     - SessionController.unfollow_delay)
                                    * random.random()
                                    + SessionController.unfollow_delay)
-            print('Sleeping %i seconds' % calculated_delay)
+            logger.debug('Sleeping %i seconds' % calculated_delay)
             time.sleep(calculated_delay)
 
+        logger.info("Finished unfollowing user list")
+
     def login(self, username=None, password=None):
-        print("Attempting login")
+        logger.info("Attempting login")
 
         self.session.cookies.update({
             'sessionid': '',
@@ -176,11 +184,11 @@ class SessionController:
 
                 self.user_id = int(data['user']['id'])
             else:
-                print('Login failed, possible cred issue')
+                logger.warning('Login failed, possible cred issue')
                 quit()
         else:
-            print('Login failed, non-200')
-            print('Lode %i found' % login.status_code)
+            logger.warning('Login failed, non-200')
+            logger.warning('Lode %i found' % login.status_code)
             quit()
 
     def logout(self):
@@ -188,9 +196,9 @@ class SessionController:
             time.sleep(1)
 
             try:
-                print('Logging out...')
+                logger.info('Logging out...')
 
                 logout_post = {'csrfmiddlewaretoken': self.csrftoken}
                 self.session.post(SessionController.url_logout, data=logout_post)
             except:
-                print('Failed to logout')
+                logger.warning('Failed to logout')
