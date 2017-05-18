@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import requests
 import random
 import time
@@ -8,15 +10,16 @@ import sys
 import datetime
 import os.path
 
+
 if not os.path.isfile('config.json'):
-    print 'please create a config.json file (config_sammple.json in root)'
+    print('please create a config.json file (config_sammple.json in root)')
     quit()
 
 with open('config.json', 'r') as fp:
     try:
         config = json.load(fp)
     except:
-        print 'invalid config.json file (probably parsing issue)'
+        print('invalid config.json file (probably parsing issue)')
         quit()
 
 logged_in = False
@@ -42,29 +45,29 @@ url_unfollow = 'https://www.instagram.com/web/friendships/%s/unfollow/'
 def menu():
     global num_unfollow, min_to_unfollow, unfollow_delay
 
-    print 'instamanage 0.0.1 by ebrian'
-    print ''
-    print 'choose an option from the choices below. if the option has stars'
-    print 'beneath it then that means there are config options that you\'ll'
-    print 'be asked to provide answers for. defaults are in brackets[].'
-    print ''
-    print 'menu:'
-    print ''
-    print ' [1] - sync followers and following, write to json'
-    print ''
-    print ' [2] - sync followers and following, write to json, diff, unfollow'
-    print '  * c1[50]: # to unfollow'
-    print '  * c2[25]: how many minutes to take to unfollow c1'
-    print ''
-    print ' [3] - load followers and following from file (state.json), diff, unfollow'
-    print '  * c1[50]: # to unfollow'
-    print '  * c2[25]: how many minutes to take to unfollow c1'
-    print ''
+    print('instamanage 0.0.1 by ebrian')
+    print('')
+    print('choose an option from the choices below. if the option has stars')
+    print('beneath it then that means there are config options that you\'ll')
+    print('be asked to provide answers for. defaults are in brackets[].')
+    print('')
+    print('menu:')
+    print('')
+    print(' [1] - sync followers and following, write to json')
+    print('')
+    print(' [2] - sync followers and following, write to json, diff, unfollow')
+    print('  * c1[50]: # to unfollow')
+    print('  * c2[25]: how many minutes to take to unfollow c1')
+    print('')
+    print(' [3] - load followers and following from file (state.json), diff, unfollow')
+    print('  * c1[50]: # to unfollow')
+    print('  * c2[25]: how many minutes to take to unfollow c1')
+    print('')
 
     try:
         choice = raw_input('What would you like to do? ')
     except:
-        print ''
+        print('')
         quit()
 
     def config_opt_23():
@@ -84,7 +87,7 @@ def menu():
 
         unfollow_delay = (min_to_unfollow * 60) / num_unfollow
 
-        print 'unfollow rate set at once every %i-%i seconds' % (unfollow_delay, unfollow_delay + 7)
+        print('unfollow rate set at once every %i-%i seconds' % (unfollow_delay, unfollow_delay + 7))
 
     if choice:
         if int(choice) == 1:
@@ -105,7 +108,7 @@ def menu():
 def start_sync():
     login()
 
-    print 'building follower list...'
+    print('building follower list...')
 
     # get page 1 of followers
     followers_post = {
@@ -177,9 +180,9 @@ def start_sync():
         sys.stdout.write('\rfound {0} followers'.format(len(user_followers)))
         sys.stdout.flush()
 
-    print '\ndone finding followers'
+    print('\ndone finding followers')
 
-    print 'building following list...'
+    print('building following list...')
 
     # get page 1 of following
     following_post = {
@@ -251,14 +254,14 @@ def start_sync():
         sys.stdout.write('\rfound {0} following'.format(len(user_following)))
         sys.stdout.flush()
 
-    print '\ndone finding following'
+    print('\ndone finding following')
 
     diff = set(user_following) - set(user_followers)
 
-    print 'found %i people who you follow but don\'t follow you back' % (len(diff))
+    print('found %i people who you follow but don\'t follow you back' % (len(diff)))
 
     with open('state.json', 'w') as user_state:
-        print 'writing data to state.json'
+        print('writing data to state.json')
 
         json.dump({
             'version': '0.0.1',
@@ -275,7 +278,7 @@ def start_sync():
 
 def load_sync():
     if not os.path.isfile('state.json'):
-        print 'no state.json to load, please run a sync with option 1 or 2'
+        print('no state.json to load, please run a sync with option 1 or 2')
         quit()
 
     fp = open('state.json', 'r')
@@ -285,13 +288,13 @@ def load_sync():
     unfollow_list = set(user_state['following']['data']) - set(user_state['followers']['data'])
 
     if len(unfollow_list) <= 0:
-        print 'nobody to unfollow'
+        print('nobody to unfollow')
         quit()
 
     if not logged_in:
         login()
 
-    print 'starting to unfollow %i out of %i people' % (num_unfollow, len(unfollow_list))
+    print('starting to unfollow %i out of %i people' % (num_unfollow, len(unfollow_list)))
 
     left_to_unfollow = num_unfollow
 
@@ -299,7 +302,7 @@ def load_sync():
         if left_to_unfollow == 0:
             break
 
-        print 'unfollowing %s' % id
+        print('unfollowing %s' % id)
 
         unfollow = session.post(url_unfollow % id)
 
@@ -309,8 +312,8 @@ def load_sync():
             if status['status'] != 'ok':
                 raise
         except:
-            print 'possibly too fast, preventing ban...'
-            print 'error received: %s' % unfollow.text
+            print('possibly too fast, preventing ban...')
+            print('error received: %s' % unfollow.text)
             quit()
 
         try:
@@ -323,7 +326,7 @@ def load_sync():
         fp.close()
 
         calculated_delay = int(((unfollow_delay + 7) - unfollow_delay) * random.random() + unfollow_delay)
-        print 'sleeping %i seconds' % calculated_delay
+        print('sleeping %i seconds' % calculated_delay)
         time.sleep(calculated_delay)
 
         left_to_unfollow -= 1
@@ -332,7 +335,7 @@ def load_sync():
 def login():
     global logged_in, logged_in_id
 
-    print 'attempting login...'
+    print('attempting login...')
 
     session.cookies.update({
         'sessionid': '',
@@ -381,7 +384,7 @@ def login():
         finder = r.text.find(config['username'])
 
         if finder != -1:
-            print 'logged in successfully'
+            print('logged in successfully')
             logged_in = True
 
             # populate user info
@@ -392,11 +395,11 @@ def login():
 
             logged_in_id = int(data['user']['id'])
         else:
-            print 'login failed, possible cred issue'
+            print('login failed, possible cred issue')
             quit()
     else:
-        print 'login failed, non-200'
-        print 'code %i found' % (login.status_code)
+        print('login failed, non-200')
+        print('code %i found' % (login.status_code))
         quit()
 
 
@@ -405,12 +408,12 @@ def logout():
         time.sleep(5)
 
         try:
-            print 'logging out...'
+            print('logging out...')
 
             logout_post = {'csrfmiddlewaretoken': csrftoken}
             session.post(url_logout, data=logout_post)
         except:
-            print 'failed to logout'
+            print('failed to logout')
 
 
 signal.signal(signal.SIGTERM, logout)
