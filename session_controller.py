@@ -5,7 +5,7 @@ import requests
 import time
 import logging
 
-from User import User
+from user import User
 
 logger = logging.getLogger('stats')
 

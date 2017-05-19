@@ -1,6 +1,6 @@
 import logging
 
-from FileRepository import read_pickle, write_pickle
+from file_repository import read_pickle, write_pickle
 
 logger = logging.getLogger('stats')
 

@@ -1,5 +1,5 @@
 import logging
-import Colors
+import colors
 
 logger = logging.getLogger('stats')
 
@@ -17,7 +17,7 @@ class User:
 
     def __str__(self):
         if self.is_verified:
-            out = Colors.WARNING + "[x]" + Colors.ENDC
+            out = colors.WARNING + "[x]" + colors.ENDC
         else:
             out = "[ ]"
 

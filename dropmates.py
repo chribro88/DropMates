@@ -6,10 +6,10 @@ import atexit
 import logging
 import signal
 
-from FileRepository import read_json
-from Logger import create_logger
-from SessionController import SessionController
-from UserService import UserService
+from file_repository import read_json
+from log import create_logger
+from session_controller import SessionController
+from user_service import UserService
 
 logger = create_logger("stats")
 
@@ -64,7 +64,20 @@ class Application:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Analyze and process instagram followers')
+    example_text = '''example:
+
+  # Show users who follow you and are not verified
+  dropmates.py -c config.json -fx
+
+  # Show users who don't follow you back, with debug messages
+  dropmates.py -u username -p password -svv
+
+  # Ignore local cache and automatically unfollow users, providing a UI for selecting which users
+  dropmates.py -c config -ai'''
+
+    parser = argparse.ArgumentParser(description='Analyze and process instagram followers',
+                                     epilog=example_text,
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
 
     parser.add_argument("-u", "--username", help='Instagram username')
     parser.add_argument("-p", "--password", help='Instagram password')
