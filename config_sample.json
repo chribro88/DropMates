@@ -1,4 +1,6 @@
 {
-    "username": "yourusername",
-    "password": "yourpassword"
+	"data": {
+		"username": "yourusername",
+		"password": "yourpassword"
+	}
 }
