@@ -28,6 +28,10 @@ class SessionController:
         self.username = None
         self.password = None
 
+    def set_credentials(self, username, password):
+        self.username = username
+        self.password = password
+
     def __get_page(self, data):
         logger.info("Getting page with data")
         logger.debug("Page data: %s" % data)
@@ -64,13 +68,16 @@ class SessionController:
     def __get_users(self, relationship):
         logger.info("Building relationship list: %s" % relationship)
 
+        if not self.logged_in:
+            self.login()
+
         data = self.__get_page("%s.first(20)" % relationship)
         users = []
 
         for node in data[relationship]['nodes']:
             users.append(User.from_node(node))
 
-        while data[relationship]['page_info']['has_next_cursor']:
+        while data[relationship]['page_info']['has_next_page']:
             time.sleep(1 + random.random())
 
             end_cursor = data[relationship]['page_info']['end_cursor']
@@ -95,8 +102,7 @@ class SessionController:
         logger.info("Unfollowing %s" % user.full_name)
 
         if not self.logged_in:
-            logger.warning("Not logged in, exiting")
-            exit()
+            self.login()
 
         response = self.session.post(SessionController.url_unfollow % user.id)
 
@@ -105,7 +111,7 @@ class SessionController:
             if status['status'] != 'ok':
                 raise Exception("Failed to unfollow")
         except:
-            logger.warning("Possibly unfolowing too fast: %s" % status)
+            logger.warning("Possibly unfolowing too fast")
             logger.warning("Exiting to prevent ban")
             quit()
 
@@ -123,7 +129,7 @@ class SessionController:
 
         logger.info("Finished unfollowing user list")
 
-    def login(self, username=None, password=None):
+    def login(self):
         logger.info("Attempting login")
 
         self.session.cookies.update({
@@ -137,8 +143,8 @@ class SessionController:
         })
 
         login_details = {
-            'username': username,
-            'password': password
+            'username': self.username,
+            'password': self.password
         }
 
         self.session.headers.update({
@@ -170,16 +176,16 @@ class SessionController:
 
         if login.status_code == 200:
             r = self.session.get('https://www.instagram.com/')
-            finder = r.text.find(username)
+            finder = r.text.find(self.username)
 
             if finder != -1:
-                print('Logged in successfully')
+                logger.info('Logged in successfully')
                 self.logged_in = True
 
                 # populate user info
                 time.sleep(3)
 
-                user_info = self.session.get('https://www.instagram.com/%s/?__a=1' % username)
+                user_info = self.session.get('https://www.instagram.com/%s/?__a=1' % self.username)
                 data = json.loads(user_info.text)
 
                 self.user_id = int(data['user']['id'])
