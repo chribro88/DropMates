@@ -24,6 +24,7 @@ def read_json(fname):
             quit()
 
 
+# POSSIBLY DEPRECATED
 def write_json(data, fname):
     logger.info("Writing data to json: %s" % fname)
     with open(fname, 'w') as fp:
@@ -50,7 +51,6 @@ def read_pickle(fname):
         logger.warning("File not found: %s" % fname)
         return
 
-    data = None
     with open(fname, "rb") as fp:
         data = pickle.load(fp)
-    return data
+    return data or None

@@ -99,7 +99,7 @@ class SessionController:
         return self.__get_users("follows")
 
     def unfollow(self, user):
-        logger.info("Unfollowing @%s" % user.username)
+        print("Unfollowing @%s" % user.username)
 
         if not self.logged_in:
             self.login()

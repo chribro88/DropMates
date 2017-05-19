@@ -2,15 +2,13 @@
 
 
 import argparse
-
+import atexit
 import logging
 import signal
 
-import atexit
-
-from FileRepository import read_json, write_json, write_pickle, read_pickle
-from SessionController import SessionController
+from FileRepository import read_json
 from Logger import create_logger
+from SessionController import SessionController
 from UserService import UserService
 
 logger = create_logger("stats")
@@ -32,7 +30,7 @@ class Application:
         for u in users:
             print(u)
 
-        logger.info("Displayed %i users" % len(users))
+        print("Displayed %i users" % len(users))
 
     def display_followers(self, verified):
         self.__display_users(self.users.find_followers(verified))
@@ -73,7 +71,7 @@ if __name__ == "__main__":
     parser.add_argument("-c", "--config", help='Application config file')
     parser.add_argument("-r", "--rebuild", action="store_true", help='Rebuild the user cache from the web')
     parser.add_argument("-x", "--verified", action="store_true", help='Filter by hiding verified users')
-    parser.add_argument("-v", "--verbose", action="store_true", help='Verbose logging')
+    parser.add_argument("-v", "--verbose", action="count", help='Verbose logging')
     parser.add_argument("-i", "--interactive", action="store_true", help='Interactive unfollowing')
 
     group = parser.add_mutually_exclusive_group(required=True)
@@ -85,8 +83,12 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    if args.verbose:
+    if args.verbose == 2:
         logger.setLevel(logging.DEBUG)
+    elif args.verbose == 1:
+        logger.setLevel(logging.INFO)
+    else:
+        logger.setLevel(logging.CRITICAL)
 
     app = None
     un = args.username
@@ -98,7 +100,7 @@ if __name__ == "__main__":
         pw = config['password']
 
     if not un and not pw:
-        logger.warn("No credentials found")
+        logger.critical("No credentials found")
         exit()
 
     app = Application(un, pw, args.rebuild)
