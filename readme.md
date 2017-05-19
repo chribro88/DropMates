@@ -12,12 +12,11 @@ Support for automatically unfollowing those users is provided.
 ### Installation
 ```
 git clone https://github.com/mihalea/dropmates
-cd frienddropper
+cd dropmates
 virtualenv env
 source env/bin/activate
-pip install requests
-pip install 'requests[security]'
-cp config_sample.json config.json
+pip install -r requirements.txt
+cp config_sample.json config.json # Optional configuration file
 python dropmates.py
 ```
 
