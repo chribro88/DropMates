@@ -57,6 +57,14 @@ class Application:
             "following": self.following
         }, Application.filestore)
 
+    def display_followers(self):
+        for f in self.followers:
+            print(f)
+
+    def display_following(self):
+        for f in self.following:
+            print(f)
+
     def close(self):
         self.session.logout()
 
@@ -94,5 +102,10 @@ if __name__ == "__main__":
         exit()
 
     app = Application(un, pw, args.rebuild)
+
+    if args.followers:
+        app.display_followers()
+    elif args.following:
+        app.display_following()
 
     app.close()
