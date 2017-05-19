@@ -1,4 +1,5 @@
 import logging
+import Colors
 
 logger = logging.getLogger('stats')
 
@@ -13,6 +14,17 @@ class User:
         self.followed_by_viewer = followed_by_viewer
         self.requested_by_viewer = requested_by_viewer
         self.profile_pic_url = profile_pic_url
+
+    def __str__(self):
+        out = None
+        if self.is_verified:
+            out = Colors.OKBLUE + "[x]" + Colors.ENDC
+        else:
+            out = "[ ]"
+
+        out += " %s" % self.username
+
+        return out
 
     @classmethod
     def from_node(cls, node):
