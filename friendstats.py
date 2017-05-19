@@ -43,8 +43,23 @@ class Application:
     def display_shame(self, verified):
         self.__display_users(self.users.find_shame(verified))
 
-    def auto_unfollow(self, verified):
-        self.session.unfollow_all(self.users.find_shame(verified))
+    def auto_unfollow(self, verified, interactive):
+        users = self.users.find_shame(verified)
+        if interactive:
+            users = [u for u in users if self.request_unfollow(u)]
+
+        self.session.unfollow_all(users)
+
+    def request_unfollow(self, user):
+        def req_input():
+            k = input("Do you want do unfollow %s (@%s)? [y/n] " % (user.full_name, user.username))
+            return k.lower()
+
+        key = req_input()
+        while key not in ['y', 'n']:
+            key = req_input()
+
+        return key == 'y'
 
     def close(self):
         self.session.logout()
@@ -59,6 +74,7 @@ if __name__ == "__main__":
     parser.add_argument("-r", "--rebuild", action="store_true", help='Rebuild the user cache from the web')
     parser.add_argument("-x", "--verified", action="store_true", help='Filter by hiding verified users')
     parser.add_argument("-v", "--verbose", action="store_true", help='Verbose logging')
+    parser.add_argument("-i", "--interactive", action="store_true", help='Interactive unfollowing')
 
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("-f", "--followers", action="store_true", help="Show your followers")
@@ -94,6 +110,6 @@ if __name__ == "__main__":
     elif args.shame:
         app.display_shame(args.verified)
     elif args.auto:
-        app.auto_unfollow(args.verified)
+        app.auto_unfollow(args.verified, args.interactive)
 
     app.close()
