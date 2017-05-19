@@ -57,13 +57,16 @@ class Application:
             "following": self.following
         }, Application.filestore)
 
-    def display_followers(self):
-        for f in self.followers:
-            print(f)
+    def __display_users(self, users, verified):
+        for u in users:
+            if not verified or verified and not u.is_verified:
+                print(u)
 
-    def display_following(self):
-        for f in self.following:
-            print(f)
+    def display_followers(self, verified):
+        self.__display_users(self.followers, verified)
+
+    def display_following(self, verified):
+        self.__display_users(self.following, verified)
 
     def close(self):
         self.session.logout()
@@ -104,8 +107,8 @@ if __name__ == "__main__":
     app = Application(un, pw, args.rebuild)
 
     if args.followers:
-        app.display_followers()
+        app.display_followers(args.verified)
     elif args.following:
-        app.display_following()
+        app.display_following(args.verified)
 
     app.close()
