@@ -7,7 +7,7 @@ import argparse
 
 import logging
 
-from FileRepository import read_json
+from FileRepository import read_json, write_json, write_pickle, read_pickle
 from SessionController import SessionController
 from Logger import create_logger
 
@@ -15,14 +15,14 @@ logger = create_logger("stats")
 
 
 class Application:
-    filestore = "cache.json"
+    filestore = "cache.pickle"
 
     def __init__(self, username, password, rebuild):
         self.session = SessionController()
         self.followers = []
         self.following = []
 
-        # self.session.login(username, password)
+        self.session.set_credentials(username, password)
         if not rebuild:
             self.read_cache()
 
@@ -30,12 +30,18 @@ class Application:
             self.rebuild_cache()
 
     def read_cache(self):
-        cache = read_json(Application.filestore)
+        logger.info("Reading cache")
+        cache = read_pickle(Application.filestore)
 
         if cache:
             try:
                 self.followers = cache['followers']
                 self.following = cache['following']
+
+                logger.info("Cache read successfully")
+                logger.info("Followers: %i" % len(self.followers))
+                logger.info("Following: %i" % len(self.following))
+
                 return True
             except:
                 logger.warning("Failed to read cache")
@@ -43,7 +49,13 @@ class Application:
         return False
 
     def rebuild_cache(self):
-        pass
+        self.followers = self.session.get_followers()
+        self.following = self.session.get_following()
+
+        write_pickle({
+            "followers": self.followers,
+            "following": self.following
+        }, Application.filestore)
 
     def close(self):
         self.session.logout()
@@ -69,18 +81,18 @@ if __name__ == "__main__":
         logger.setLevel(logging.DEBUG)
 
     app = None
-    username = args.username
-    password = args.password
-    if not username and not password and args.config:
+    un = args.username
+    pw = args.password
+    if not un and not pw and args.config:
         logger.debug("Reading username and password from config file")
         config = read_json(args.config)
-        username = config['username']
-        password = config['password']
+        un = config['username']
+        pw = config['password']
 
-    if not username and not password:
+    if not un and not pw:
         logger.warn("No credentials found")
         exit()
 
-    app = Application(username, password, args.rebuild)
+    app = Application(un, pw, args.rebuild)
 
     app.close()
