@@ -99,14 +99,13 @@ class SessionController:
         return self.__get_users("follows")
 
     def unfollow(self, user):
-        logger.info("Unfollowing %s" % user.full_name)
+        logger.info("Unfollowing @%s" % user.username)
 
         if not self.logged_in:
             self.login()
 
-        response = self.session.post(SessionController.url_unfollow % user.id)
-
         try:
+            response = self.session.post(SessionController.url_unfollow % user.id)
             status = json.loads(response.text)
             if status['status'] != 'ok':
                 raise Exception("Failed to unfollow")

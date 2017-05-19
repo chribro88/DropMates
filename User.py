@@ -16,15 +16,23 @@ class User:
         self.profile_pic_url = profile_pic_url
 
     def __str__(self):
-        out = None
         if self.is_verified:
-            out = Colors.OKBLUE + "[x]" + Colors.ENDC
+            out = Colors.WARNING + "[x]" + Colors.ENDC
         else:
             out = "[ ]"
 
         out += " %s" % self.username
 
         return out
+
+    def __hash__(self):
+        return hash(self.id)
+
+    def __eq__(self, other):
+        return isinstance(other, User) and other.id == self.id
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     @classmethod
     def from_node(cls, node):

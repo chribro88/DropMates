@@ -1,75 +1,54 @@
 #!/usr/bin/env python3
 
 
-# signal.signal(signal.SIGTERM, logout)
-# atexit.register(logout)
 import argparse
 
 import logging
+import signal
+
+import atexit
 
 from FileRepository import read_json, write_json, write_pickle, read_pickle
 from SessionController import SessionController
 from Logger import create_logger
+from UserService import UserService
 
 logger = create_logger("stats")
 
 
 class Application:
-    filestore = "cache.pickle"
-
     def __init__(self, username, password, rebuild):
         self.session = SessionController()
-        self.followers = []
-        self.following = []
+        self.users = UserService()
 
         self.session.set_credentials(username, password)
-        if not rebuild:
-            self.read_cache()
+        if rebuild or not self.users.read_cache():
+            self.users.rebuild_cache(self.session)
 
-        if not self.followers and not self.following:
-            self.rebuild_cache()
+        signal.signal(signal.SIGTERM, self.session.logout)
+        atexit.register(self.session.logout)
 
-    def read_cache(self):
-        logger.info("Reading cache")
-        cache = read_pickle(Application.filestore)
-
-        if cache:
-            try:
-                self.followers = cache['followers']
-                self.following = cache['following']
-
-                logger.info("Cache read successfully")
-                logger.info("Followers: %i" % len(self.followers))
-                logger.info("Following: %i" % len(self.following))
-
-                return True
-            except:
-                logger.warning("Failed to read cache")
-
-        return False
-
-    def rebuild_cache(self):
-        self.followers = self.session.get_followers()
-        self.following = self.session.get_following()
-
-        write_pickle({
-            "followers": self.followers,
-            "following": self.following
-        }, Application.filestore)
-
-    def __display_users(self, users, verified):
+    def __display_users(self, users):
         for u in users:
-            if not verified or verified and not u.is_verified:
-                print(u)
+            print(u)
+
+        logger.info("Displayed %i users" % len(users))
 
     def display_followers(self, verified):
-        self.__display_users(self.followers, verified)
+        self.__display_users(self.users.find_followers(verified))
 
     def display_following(self, verified):
-        self.__display_users(self.following, verified)
+        self.__display_users(self.users.find_following(verified))
+
+    def display_shame(self, verified):
+        self.__display_users(self.users.find_shame(verified))
+
+    def auto_unfollow(self, verified):
+        self.session.unfollow_all(self.users.find_shame(verified))
 
     def close(self):
         self.session.logout()
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Analyze and process instagram followers')
@@ -85,6 +64,8 @@ if __name__ == "__main__":
     group.add_argument("-f", "--followers", action="store_true", help="Show your followers")
     group.add_argument("-o", "--following", action="store_true", help="Show the user that you follow")
     group.add_argument("-s", "--shame", action="store_true", help="Show those users that don't follow you back")
+    group.add_argument("-a", "--auto", action="store_true", help='Automatically unfollow those users '
+                                                                 'that don\'t follow you back')
 
     args = parser.parse_args()
 
@@ -110,5 +91,9 @@ if __name__ == "__main__":
         app.display_followers(args.verified)
     elif args.following:
         app.display_following(args.verified)
+    elif args.shame:
+        app.display_shame(args.verified)
+    elif args.auto:
+        app.auto_unfollow(args.verified)
 
     app.close()
